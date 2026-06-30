@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bài tập 3 - Đếm ngược | 701-221A010219</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <img src="images/avatar.jpg" alt="avatar">
+      <span>Dương Ngọc Đoàn - 701</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="baitap01.html">Bài tập 1</a></li>
+      <li><a href="baitap02.html">Bài tập 2</a></li>
+      <li><a href="baitap03.html">Bài tập 3</a></li>
+      <li><a href="about.html">Trả lời Lý thuyết</a></li>
+      <li><a href="baitap18.html">Bài tập 18</a></li>
+      <li><a href="baitap19.html">Bài tập 19</a></li>
+      <li><a href="contact.html">Điểm danh</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="page-header">
+  <h1>⏱️ Bài tập 3: Đồng hồ đếm ngược</h1>
+  <p>Đếm ngược từ 10 phút, cảnh báo khi dưới 1 phút</p>
+</div>
+
+<main class="container">
+  <div class="timer-wrapper">
+    <div class="timer-display" id="timerDisplay">10:00</div>
+    <div class="timer-controls">
+      <button class="btn" id="startBtn">▶ Bắt đầu</button>
+      <button class="btn btn-outline" id="pauseBtn">⏸ Tạm dừng</button>
+      <button class="btn btn-outline" id="resetBtn">↺ Đặt lại</button>
+    </div>
+  </div>
+
+  <p style="text-align:center; margin-top:30px;">
+    <a href="about.html#bai3">→ Xem giải thích logic tư duy của bài này</a>
+  </p>
+</main>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="icon">⏰</div>
+    <h3>Hết thời gian!</h3>
+    <p>Đồng hồ đếm ngược đã kết thúc.</p>
+    <button class="btn" id="modalCloseBtn">Đóng</button>
+  </div>
+</div>
+
+<footer class="site-footer">
+  &copy; 2026 Dương Ngọc Đoàn - MSSV 221A010219 - Lớp 701
+</footer>
+
+<script src="js/script.js"></script>
+<script>
+  const TOTAL_SECONDS = 10 * 60; // 10 phút
+  const WARNING_THRESHOLD = 60;  // dưới 1 phút thì cảnh báo
+
+  const timerDisplay = document.getElementById("timerDisplay");
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+
+  let remainingSeconds = TOTAL_SECONDS;
+  let intervalId = null; // giữ tham chiếu duy nhất tới interval đang chạy
+
+  function formatTime(totalSeconds) {
+    const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const ss = String(totalSeconds % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  }
+
+  function updateDisplay() {
+    timerDisplay.textContent = formatTime(remainingSeconds);
+    timerDisplay.classList.toggle("warning", remainingSeconds <= WARNING_THRESHOLD && remainingSeconds > 0);
+  }
+
+  function clearTimer() {
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  function startTimer() {
+    // Luôn dọn interval cũ trước khi tạo cái mới
+    // -> tránh tạo nhiều interval chạy song song (nguyên nhân phổ biến của memory leak)
+    clearTimer();
+
+    if (remainingSeconds <= 0) return;
+
+    intervalId = setInterval(() => {
+      remainingSeconds--;
+      updateDisplay();
+
+      if (remainingSeconds <= 0) {
+        clearTimer();
+        modalOverlay.classList.add("show");
+      }
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    clearTimer();
+  }
+
+  function resetTimer() {
+    clearTimer();
+    remainingSeconds = TOTAL_SECONDS;
+    updateDisplay();
+    modalOverlay.classList.remove("show");
+  }
+
+  startBtn.addEventListener("click", startTimer);
+  pauseBtn.addEventListener("click", pauseTimer);
+  resetBtn.addEventListener("click", resetTimer);
+  modalCloseBtn.addEventListener("click", () => modalOverlay.classList.remove("show"));
+
+  // QUAN TRỌNG: dọn interval khi rời trang để tránh memory leak
+  // (nếu không, interval vẫn chạy ngầm dù DOM đã bị hủy)
+  window.addEventListener("beforeunload", clearTimer);
+  document.addEventListener("visibilitychange", () => {
+    // Tùy chọn: tạm dừng khi tab bị ẩn để tiết kiệm tài nguyên
+    // (có thể bỏ đoạn này nếu muốn đếm ngược chạy nền)
+  });
+
+  updateDisplay();
+</script>
+
+</body>
+</html>

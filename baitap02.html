@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bài tập 2 - Form đăng ký | 701-221A010219</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <img src="images/avatar.jpg" alt="avatar">
+      <span>Dương Ngọc Đoàn - 701</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="baitap01.html">Bài tập 1</a></li>
+      <li><a href="baitap02.html">Bài tập 2</a></li>
+      <li><a href="baitap03.html">Bài tập 3</a></li>
+      <li><a href="about.html">Trả lời Lý thuyết</a></li>
+      <li><a href="baitap18.html">Bài tập 18</a></li>
+      <li><a href="baitap19.html">Bài tập 19</a></li>
+      <li><a href="contact.html">Điểm danh</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="page-header">
+  <h1>📝 Bài tập 2: Form đăng ký người dùng</h1>
+  <p>Validate email, mật khẩu mạnh, lưu vào LocalStorage</p>
+</div>
+
+<main class="container">
+  <div class="form-wrapper">
+    <div class="alert alert-success" id="successAlert">
+      ✅ Đăng ký thành công! Dữ liệu đã được lưu vào LocalStorage.
+    </div>
+    <div class="alert alert-error" id="errorAlert">
+      ⚠️ Vui lòng kiểm tra lại thông tin đã nhập.
+    </div>
+
+    <form id="registerForm" novalidate>
+      <div class="form-group">
+        <label for="fullname">Họ và tên</label>
+        <input type="text" id="fullname" name="fullname" maxlength="80" autocomplete="off">
+        <p class="error-text" id="fullnameError">Vui lòng nhập họ tên (ít nhất 2 ký tự).</p>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" maxlength="100" autocomplete="off">
+        <p class="error-text" id="emailError">Email không hợp lệ.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input type="password" id="password" name="password" maxlength="64" autocomplete="new-password">
+        <p class="hint-text">Ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.</p>
+        <div class="password-strength">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <p class="error-text" id="passwordError">Mật khẩu chưa đủ mạnh.</p>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="agreeTerms" name="agreeTerms">
+        <label for="agreeTerms">Tôi đồng ý với điều khoản sử dụng</label>
+      </div>
+      <p class="error-text" id="agreeError" style="margin-top:-14px; margin-bottom:18px;">Bạn cần đồng ý điều khoản để tiếp tục.</p>
+
+      <button type="submit" class="btn submit-btn">Đăng ký</button>
+    </form>
+  </div>
+
+  <p style="text-align:center; margin-top:30px;">
+    <a href="about.html#bai2">→ Xem giải thích logic tư duy của bài này</a>
+  </p>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 Dương Ngọc Đoàn - MSSV 221A010219 - Lớp 701
+</footer>
+
+<script src="js/script.js"></script>
+<script>
+  const form = document.getElementById("registerForm");
+  const fullnameInput = document.getElementById("fullname");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const agreeInput = document.getElementById("agreeTerms");
+
+  const fullnameError = document.getElementById("fullnameError");
+  const emailError = document.getElementById("emailError");
+  const passwordError = document.getElementById("passwordError");
+  const agreeError = document.getElementById("agreeError");
+
+  const successAlert = document.getElementById("successAlert");
+  const errorAlert = document.getElementById("errorAlert");
+  const strengthBars = document.querySelectorAll(".password-strength span");
+
+  // Regex kiểm tra email hợp lệ (dạng cơ bản, đủ dùng cho phía client)
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Mật khẩu: tối thiểu 8 ký tự, có chữ hoa, chữ thường và số
+  function isStrongPassword(pw) {
+    return (
+      pw.length >= 8 &&
+      /[A-Z]/.test(pw) &&
+      /[a-z]/.test(pw) &&
+      /[0-9]/.test(pw)
+    );
+  }
+
+  function calcStrength(pw) {
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[a-z]/.test(pw) && /[0-9]/.test(pw)) score++;
+    if (pw.length >= 12 || /[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+  }
+
+  passwordInput.addEventListener("input", () => {
+    const score = calcStrength(passwordInput.value);
+    const colors = ["#dc2626", "#f97316", "#eab308", "#16a34a"];
+    strengthBars.forEach((bar, i) => {
+      bar.style.background = i < score ? colors[score - 1] : "#e5e7eb";
+    });
+  });
+
+  function showFieldError(input, errorEl, show) {
+    input.classList.toggle("invalid", show);
+    errorEl.classList.toggle("show", show);
+  }
+
+  function validateForm() {
+    let valid = true;
+
+    const name = fullnameInput.value.trim();
+    if (name.length < 2) {
+      showFieldError(fullnameInput, fullnameError, true);
+      valid = false;
+    } else {
+      showFieldError(fullnameInput, fullnameError, false);
+    }
+
+    const email = emailInput.value.trim();
+    if (!EMAIL_REGEX.test(email)) {
+      showFieldError(emailInput, emailError, true);
+      valid = false;
+    } else {
+      showFieldError(emailInput, emailError, false);
+    }
+
+    const password = passwordInput.value;
+    if (!isStrongPassword(password)) {
+      showFieldError(passwordInput, passwordError, true);
+      valid = false;
+    } else {
+      showFieldError(passwordInput, passwordError, false);
+    }
+
+    if (!agreeInput.checked) {
+      agreeError.classList.add("show");
+      valid = false;
+    } else {
+      agreeError.classList.remove("show");
+    }
+
+    return valid;
+  }
+
+  // Hash đơn giản phía client (KHÔNG thay thế hashing thật ở server)
+  // Mục đích: tránh lưu mật khẩu dạng plain text ngay cả trong LocalStorage demo
+  async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function escapeHTML(str) {
+    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return String(str).replace(/[&<>"']/g, (ch) => map[ch]);
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    successAlert.classList.remove("show");
+    errorAlert.classList.remove("show");
+
+    if (!validateForm()) {
+      errorAlert.classList.add("show");
+      return;
+    }
+
+    const passwordHash = await hashPassword(passwordInput.value);
+
+    // Chỉ lưu thông tin cần thiết, KHÔNG bao giờ lưu mật khẩu dạng rõ (plain text)
+    const userData = {
+      fullname: escapeHTML(fullnameInput.value.trim()),
+      email: escapeHTML(emailInput.value.trim()),
+      passwordHash,
+      registeredAt: new Date().toISOString(),
+    };
+
+    try {
+      // Lưu vào danh sách users thay vì ghi đè 1 key duy nhất
+      const existing = JSON.parse(localStorage.getItem("users") || "[]");
+      existing.push(userData);
+      localStorage.setItem("users", JSON.stringify(existing));
+
+      successAlert.classList.add("show");
+      form.reset();
+      strengthBars.forEach((bar) => (bar.style.background = "#e5e7eb"));
+    } catch (err) {
+      // Trường hợp LocalStorage đầy hoặc bị chặn (chế độ ẩn danh nghiêm ngặt)
+      errorAlert.textContent = "⚠️ Không thể lưu dữ liệu cục bộ. Vui lòng kiểm tra cài đặt trình duyệt.";
+      errorAlert.classList.add("show");
+    }
+  });
+</script>
+
+</body>
+</html>

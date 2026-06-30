@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bài tập 1 - Danh sách sản phẩm | 701-221A010219</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <img src="images/avatar.jpg" alt="avatar">
+      <span>Dương Ngọc Đoàn - 701</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="baitap01.html">Bài tập 1</a></li>
+      <li><a href="baitap02.html">Bài tập 2</a></li>
+      <li><a href="baitap03.html">Bài tập 3</a></li>
+      <li><a href="about.html">Trả lời Lý thuyết</a></li>
+      <li><a href="baitap18.html">Bài tập 18</a></li>
+      <li><a href="baitap19.html">Bài tập 19</a></li>
+      <li><a href="contact.html">Điểm danh</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="page-header">
+  <h1>🛒 Bài tập 1: Danh sách sản phẩm</h1>
+  <p>Tìm kiếm sản phẩm yêu thích của bạn bên dưới</p>
+</div>
+
+<main class="container">
+  <div class="search-box">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Tìm kiếm theo tên sản phẩm..."
+      maxlength="60"
+      autocomplete="off"
+    >
+  </div>
+
+  <p class="result-count" id="resultCount"></p>
+
+  <div class="product-grid" id="productGrid"></div>
+
+  <div class="empty-state" id="emptyState">
+    <div style="font-size:40px;">🔍</div>
+    <p>Không tìm thấy sản phẩm nào phù hợp.</p>
+  </div>
+
+  <p style="text-align:center; margin-top:30px;">
+    <a href="about.html#bai1">→ Xem giải thích logic tư duy của bài này</a>
+  </p>
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 Dương Ngọc Đoàn - MSSV 221A010219 - Lớp 701
+</footer>
+
+<script src="js/script.js"></script>
+<script>
+  // ===== 1. Dữ liệu sản phẩm (mảng JS) =====
+  const products = [
+    { id: 1, name: "Bàn phím cơ Logitech", price: 1250000, category: "Phụ kiện", icon: "⌨️" },
+    { id: 2, name: "Chuột không dây Razer", price: 590000, category: "Phụ kiện", icon: "🖱️" },
+    { id: 3, name: "Tai nghe Sony WH-1000XM5", price: 7990000, category: "Âm thanh", icon: "🎧" },
+    { id: 4, name: "Màn hình Dell 27 inch", price: 5200000, category: "Màn hình", icon: "🖥️" },
+    { id: 5, name: "Laptop Asus Zenbook", price: 22990000, category: "Laptop", icon: "💻" },
+    { id: 6, name: "Webcam Logitech C920", price: 1800000, category: "Phụ kiện", icon: "📷" },
+    { id: 7, name: "Ổ cứng SSD Samsung 1TB", price: 2100000, category: "Lưu trữ", icon: "💾" },
+  ];
+
+  const productGrid = document.getElementById("productGrid");
+  const emptyState = document.getElementById("emptyState");
+  const resultCount = document.getElementById("resultCount");
+  const searchInput = document.getElementById("searchInput");
+
+  const formatPrice = (price) =>
+    price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+
+  // Chống XSS: escape các ký tự HTML đặc biệt trước khi đưa vào innerHTML
+  function escapeHTML(str) {
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return String(str).replace(/[&<>"']/g, (ch) => map[ch]);
+  }
+
+  // Highlight từ khóa khớp, escape cả keyword (chống regex injection)
+  function highlightMatch(name, keyword) {
+    const safeName = escapeHTML(name);
+    if (!keyword) return safeName;
+
+    const safeKeyword = escapeHTML(keyword);
+    const escapedForRegex = safeKeyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escapedForRegex})`, "ig");
+
+    return safeName.replace(regex, "<mark>$1</mark>");
+  }
+
+  function renderProducts(list, keyword = "") {
+    productGrid.innerHTML = "";
+
+    if (list.length === 0) {
+      emptyState.classList.add("show");
+      resultCount.textContent = "";
+      return;
+    }
+
+    emptyState.classList.remove("show");
+    resultCount.textContent = `Tìm thấy ${list.length} sản phẩm`;
+
+    const fragment = document.createDocumentFragment();
+
+    list.forEach((product) => {
+      const card = document.createElement("div");
+      card.className = "product-card";
+      card.innerHTML = `
+        <div class="icon">${product.icon}</div>
+        <h3>${highlightMatch(product.name, keyword)}</h3>
+        <span class="category">${escapeHTML(product.category)}</span>
+        <span class="price">${formatPrice(product.price)}</span>
+      `;
+      fragment.appendChild(card);
+    });
+
+    productGrid.appendChild(fragment);
+  }
+
+  let debounceTimer;
+
+  function searchProducts(rawInput) {
+    const keyword = rawInput.trim().toLowerCase();
+
+    if (keyword === "") {
+      renderProducts(products);
+      return;
+    }
+
+    const filtered = products.filter((p) =>
+      p.name.toLowerCase().includes(keyword)
+    );
+
+    renderProducts(filtered, rawInput.trim());
+  }
+
+  searchInput.addEventListener("input", (e) => {
+    const value = e.target.value;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      searchProducts(value);
+    }, 200);
+  });
+
+  renderProducts(products);
+</script>
+
+</body>
+</html>

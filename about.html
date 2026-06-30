@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trả lời Lý thuyết | 701-221A010219</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <img src="images/avatar.jpg" alt="avatar">
+      <span>Dương Ngọc Đoàn - 701</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="baitap01.html">Bài tập 1</a></li>
+      <li><a href="baitap02.html">Bài tập 2</a></li>
+      <li><a href="baitap03.html">Bài tập 3</a></li>
+      <li><a href="about.html">Trả lời Lý thuyết</a></li>
+      <li><a href="baitap18.html">Bài tập 18</a></li>
+      <li><a href="baitap19.html">Bài tập 19</a></li>
+      <li><a href="contact.html">Điểm danh</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="page-header">
+  <h1>📖 Trả lời Lý thuyết</h1>
+  <p>Giải thích logic tư duy cho từng bài tập</p>
+</div>
+
+<main class="container">
+
+  <section class="theory-section" id="bai1">
+    <h2>Câu 1 — Danh sách sản phẩm &amp; Tìm kiếm</h2>
+
+    <h3>1. Xử lý input người dùng để tránh lỗi injection</h3>
+    <p>Khi dữ liệu được chèn vào DOM qua <code>innerHTML</code>, trình duyệt sẽ hiểu các ký tự <code>&lt;</code> và <code>&gt;</code> như thẻ HTML thật. Nếu không xử lý, một chuỗi tìm kiếm độc hại có thể gây ra lỗi XSS (Cross-Site Scripting). Giải pháp là viết hàm <code>escapeHTML()</code> chuyển các ký tự nhạy cảm (<code>&amp; &lt; &gt; " '</code>) thành HTML entity trước khi đưa vào <code>innerHTML</code>:</p>
+    <pre><code>function escapeHTML(str) {
+  const map = { "&amp;":"&amp;amp;", "&lt;":"&amp;lt;", "&gt;":"&amp;gt;", '"':"&amp;quot;", "'":"&amp;#39;" };
+  return String(str).replace(/[&amp;&lt;&gt;"']/g, ch => map[ch]);
+}</code></pre>
+    <p>Ngoài ra, vì chức năng highlight từ khóa cần tạo <code>RegExp</code> động từ input người dùng, các ký tự đặc biệt của regex (<code>. * + ? ( )</code>...) cũng được escape riêng bằng <code>replace(/[.*+?^${}()|[\]\\]/g, "\\$&amp;")</code> để tránh lỗi cú pháp hoặc hành vi tìm kiếm sai khi người dùng gõ ký tự đặc biệt.</p>
+
+    <h3>2. Tối ưu tìm kiếm</h3>
+    <ul>
+      <li><strong>Không phân biệt hoa thường:</strong> cả từ khóa và tên sản phẩm đều được chuẩn hóa bằng <code>.toLowerCase()</code> trước khi so sánh bằng <code>.includes()</code>.</li>
+      <li><strong>Debounce:</strong> thay vì lọc mảng ngay mỗi lần gõ phím, dùng <code>setTimeout</code>/<code>clearTimeout</code> để trì hoãn 200ms — chỉ thực sự lọc khi người dùng ngừng gõ, giảm số lần tính toán và render lại DOM.</li>
+      <li><strong>Thông báo lỗi:</strong> nếu mảng kết quả lọc rỗng, bật class CSS <code>.show</code> cho phần tử thông báo (mặc định ẩn bằng <code>display:none</code>) thay vì gán style trực tiếp, giúp tách biệt logic và giao diện.</li>
+    </ul>
+  </section>
+
+  <section class="theory-section" id="bai2">
+    <h2>Câu 2 — Form đăng ký người dùng</h2>
+
+    <h3>1. Xử lý sự kiện submit</h3>
+    <p>Form dùng <code>e.preventDefault()</code> trong sự kiện <code>submit</code> để ngăn trình duyệt tải lại trang (hành vi mặc định của thẻ <code>&lt;form&gt;</code>), từ đó toàn quyền kiểm soát luồng xử lý bằng JavaScript. Việc validate được tách thành các hàm nhỏ, kiểm tra từng trường độc lập (họ tên, email, mật khẩu, checkbox điều khoản) và gom kết quả vào một biến <code>valid</code> chung — nếu bất kỳ trường nào sai, form sẽ không submit và hiển thị lỗi tương ứng ngay dưới từng input thay vì chỉ báo lỗi chung chung.</p>
+    <pre><code>const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isStrongPassword(pw) {
+  return pw.length &gt;= 8 &amp;&amp; /[A-Z]/.test(pw)
+      &amp;&amp; /[a-z]/.test(pw) &amp;&amp; /[0-9]/.test(pw);
+}</code></pre>
+    <p>Quy tắc mật khẩu mạnh được kiểm tra bằng 4 điều kiện độc lập: độ dài tối thiểu 8 ký tự, có ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số — dùng các regex riêng biệt để dễ đọc và dễ thông báo lỗi cụ thể cho người dùng (thay vì 1 regex phức tạp khó bảo trì).</p>
+
+    <h3>2. Bảo mật dữ liệu cục bộ (LocalStorage)</h3>
+    <p>LocalStorage lưu dữ liệu dạng văn bản thuần, không mã hóa, và có thể bị đọc bởi bất kỳ đoạn JavaScript nào chạy trên cùng origin (kể cả mã độc nếu trang bị XSS) — do đó <strong>không bao giờ lưu mật khẩu dạng rõ (plain text)</strong>. Giải pháp áp dụng trong bài là băm (hash) mật khẩu bằng thuật toán SHA-256 thông qua Web Crypto API trước khi lưu:</p>
+    <pre><code>async function hashPassword(password) {
+  const data = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b =&gt; b.toString(16).padStart(2, "0")).join("");
+}</code></pre>
+    <p>Lưu ý quan trọng: đây chỉ là giải pháp demo phía client để minh họa nguyên tắc "không lưu plain text". Trong ứng dụng thực tế, việc xác thực và lưu trữ mật khẩu phải luôn được thực hiện ở phía server (với thuật toán băm chuyên dụng như bcrypt/argon2 và salt riêng), vì bất kỳ logic nào chạy hoàn toàn trên trình duyệt đều có thể bị người dùng xem hoặc can thiệp mã nguồn. Ngoài ra, dữ liệu họ tên và email cũng được escape qua <code>escapeHTML()</code> trước khi lưu, để nếu sau này dữ liệu này được hiển thị lại ra trang khác, nó vẫn an toàn trước XSS.</p>
+  </section>
+
+  <section class="theory-section" id="bai3">
+    <h2>Câu 3 — Đồng hồ đếm ngược</h2>
+
+    <h3>1. Xử lý interval để tránh memory leak</h3>
+    <p>Lỗi phổ biến nhất khi dùng <code>setInterval</code> là gọi nó nhiều lần (ví dụ người dùng bấm nút "Bắt đầu" liên tục) mà không hủy interval cũ, dẫn đến nhiều interval chạy song song — đồng hồ sẽ đếm nhanh hơn bình thường và tốn tài nguyên không kiểm soát được, đây chính là một dạng memory leak. Giải pháp là luôn giữ một biến duy nhất tham chiếu tới interval đang chạy (<code>intervalId</code>), và gọi <code>clearInterval()</code> trước khi tạo interval mới:</p>
+    <pre><code>let intervalId = null;
+
+function startTimer() {
+  clearTimer(); // luôn dọn interval cũ trước
+  intervalId = setInterval(() =&gt; {
+    remainingSeconds--;
+    updateDisplay();
+    if (remainingSeconds &lt;= 0) clearTimer();
+  }, 1000);
+}
+
+function clearTimer() {
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}</code></pre>
+    <p>Ngoài ra, interval còn được dọn dẹp ở 2 thời điểm khác: khi đồng hồ đếm về 0 (tự động dừng), và khi người dùng rời trang thông qua sự kiện <code>beforeunload</code> — đảm bảo không có interval nào tiếp tục chạy ngầm sau khi DOM liên quan đã bị hủy.</p>
+
+    <h3>2. Tích hợp với Domain/Hosting khi deploy (đồng bộ thời gian server)</h3>
+    <p><code>setInterval</code> dựa vào đồng hồ hệ thống của trình duyệt người dùng, nên nếu máy người dùng chỉnh sai giờ, hoặc tab bị chuyển nền (background throttling) khiến interval bị trình duyệt làm chậm lại, thời gian đếm ngược hiển thị có thể bị lệch so với thực tế. Khi deploy lên hosting thật (ví dụ GitHub Pages) và cần độ chính xác cao hơn (như đếm ngược tới một mốc thời gian sự kiện chung cho nhiều người dùng), cách tối ưu là:</p>
+    <ul>
+      <li>Không tính thời gian còn lại bằng cách trừ dần (<code>remainingSeconds--</code>) mỗi giây, mà tính lại từ một <strong>mốc thời gian kết thúc cố định</strong> (<code>endTime</code>) lấy từ server, ví dụ qua một API trả về thời gian hiện tại của server lúc tải trang.</li>
+      <li>Mỗi lần tick, tính <code>remainingSeconds = Math.round((endTime - Date.now()) / 1000)</code> thay vì trừ dần, để tự động bù trừ cho các lần tick bị trễ do tab nền hoặc máy chậm.</li>
+      <li>Định kỳ (ví dụ mỗi 30 giây - 1 phút) gọi lại API server để đồng bộ lại độ lệch giữa đồng hồ client và server, tránh tích lũy sai số theo thời gian.</li>
+    </ul>
+    <p>Vì bài tập này không có backend riêng, đồng hồ hiện dùng thời gian cục bộ của trình duyệt (đủ chính xác cho mục đích demo cá nhân), nhưng kiến trúc hàm <code>startTimer()</code>/<code>clearTimer()</code> được tách riêng để dễ dàng thay thế phần tính giờ bằng logic đồng bộ server nếu cần mở rộng sau này.</p>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  &copy; 2026 Dương Ngọc Đoàn - MSSV 221A010219 - Lớp 701
+</footer>
+
+<script src="js/script.js"></script>
+</body>
+</html>
